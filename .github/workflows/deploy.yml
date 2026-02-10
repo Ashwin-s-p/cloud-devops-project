@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI Pipeline
 
 on:
   push:
@@ -10,8 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -21,13 +20,16 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        run: echo           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
+          | docker login --username AWS --password-stdin \
+          $(echo ${{ secrets.ECR_REPO }} | cut -d'/' -f1)
 
-      - name: Build Docker image
+      - name: Build image
         run: docker build -t static-website .
 
-      - name: Tag Docker image
+      - name: Tag image
         run: docker tag static-website:latest ${{ secrets.ECR_REPO }}:latest
 
-      - name: Push Docker image to ECR
+      - name: Push image
         run: docker push ${{ secrets.ECR_REPO }}:latest
