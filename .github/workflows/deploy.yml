@@ -1,16 +1,33 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Login to Amazon ECR
-        run: |
-          aws ecr get-login-password --region $AWS_REGION \
-          | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+        run: echo           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
       - name: Build Docker image
-        run: |
-          docker build -t static-website .
+        run: docker build -t static-website .
 
       - name: Tag Docker image
-        run: |
-          docker tag static-website:latest ${{ secrets.ECR_REPO }}:latest
+        run: docker tag static-website:latest ${{ secrets.ECR_REPO }}:latest
 
       - name: Push Docker image to ECR
-        run: |
-          docker push ${{ secrets.ECR_REPO }}:latest
+        run: docker push ${{ secrets.ECR_REPO }}:latest
